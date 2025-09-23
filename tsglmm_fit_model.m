@@ -130,7 +130,7 @@ nids            = length(unique(data{:,idvar}));            % number of particip
 
 % Compute VIF values (unless it's an only intercept model
 if npars > 1
-    modelout.vifs   = computeVIF_glmm(tmp_rm);                  % Variance Inflaction Factor (VIF)
+    modelout.vifs   = tsglmm_computeVIF(tmp_rm);                  % Variance Inflaction Factor (VIF)
 else
     modelout.vifs = NaN;
 end

@@ -1,13 +1,11 @@
-function plot_estimates_tsglmm(modelout, plot_non_significant_clusters)
+function tsglmm_plot_estimates(modelout, cfg)
 
-if nargin < 2
-    plot_non_significant_clusters = 1;
-end
+
 parnames = modelout.pars.parnames;
 tslen = size(modelout.pars.estimates, 2);
 npar = length(parnames);
 pars_series = modelout.full_ind_estimates;
-
+obs_clusters_sum = modelout.obs_clusters_sum;
 % Remove the underscores from the parameter names otherwise it's ugly
 parnames_to_plot = cellfun(@(x) replace(x, '_', ' '), parnames, 'UniformOutput', false);
 
@@ -69,14 +67,14 @@ for par = 1 : npar
 
     % Draw a rectangle for each cluster, the color depends on the
     % significance
-    this_par_clusters = obs_clusters_sum(strcmp(obs_clusters_sum.pred, parnames{par}),:);
+    this_par_clusters = modelout.obs_clusters_sum(strcmp(obs_clusters_sum.pred, parnames{par}),:);
     for this_cluster = 1 : height(this_par_clusters)
         hold on
         clFirst = this_par_clusters.first(this_cluster);
         clLength = this_par_clusters.length(this_cluster);
         ylims = get(gca, 'Ylim');
-        if this_par_clusters.prob(this_cluster) >= fieldtrip_cfg.alpha;
-            if plot_non_significant_clusters
+        if this_par_clusters.prob(this_cluster) >= modelout.alpha
+            if cfg.plot_non_significant_clusters
                 rectColor = [.5 .5 .5];
                 rectangle('Position', [clFirst, ylims(1), clLength, sum(abs(ylims))], ...
                     'FaceColor', [rectColor .10], 'EdgeColor',[rectColor .1], 'FaceAlpha', .2)

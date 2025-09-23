@@ -1,6 +1,6 @@
 
 
-function [modelout, obs_clusters_sum, outputText, outputStats, clust_par_means] = run_clustperm_glmm(data, formula, cfg)
+function [modelout, clust_par_means, outputText, outputStats] = tsglmm_run_clustperm(data, formula, cfg)
 % ----------------------------------------------------------------------------------------------------------------------------------------------
 % Performs cluster based correction on parameter estimates from linear mixed
 % effect model on a time-series
@@ -75,7 +75,7 @@ fieldtrip_cfg.neighbours        = getOrDefault(fieldtrip_cfg, 'neighbours',     
 % Fit the model and find clusters in the observed data
 disp('_________________________________________________')
 disp('fitting the model...')
-[modelout]          = time_series_glmm(data, formula, cfg);
+[modelout]          = tsglmm_fit_model(data, formula, cfg);
 fprintf('fitting done in %.2fs!\n', round(toc,2));
 
 npar                = height(modelout.pars.estimates); % number of parameters (a.k.a., coefficients)
@@ -99,6 +99,8 @@ fieldtrip_cfg.design = design;
 % Preallocate output arrays
 outputText = cell(npar, 1);
 outputStats = cell(npar, 1);
+
+modelout.alpha = fieldtrip_cfg.alpha;
 
 % Loop through parameters
 disp('permuting...')
@@ -172,63 +174,23 @@ for pp = 1 : size(pars_series, 3)
     end
 end
 
+% Export observed cluster summary
+modelout.obs_clusters_sum = obs_clusters_sum;
+
 % Cut short clusters
 if cut_short_clusters
     obs_clusters_sum(obs_clusters_sum.length < minlength,:) = [];
 end
 
-modelout.obs_clusters_sum = obs_clusters_sum;
-
 %% Plots
 if wantplot_perm
-  
-
-    
-end % cfg.wantplot_perm
-
+    tsglmm_plot_estimates(modelout, cfg);
+end 
 
 %% Compute mean parameter estimates for each individual and significant cluster
-if nargout > 4 % Do this only if it's required by the output to save time
-    if isempty(obs_clusters_sum)
-        clust_par_means = [];
-    else
-        % Loop through parameters
-        out_all_clust = []; % preallocate array
-        variable_names = [];
-        for par = 1 : npar
-
-            % Unpack current parameter
-            this_parameter      = pars_series(:,:,par);
-
-            % Loop through significant clusters and compute mean pars
-            this_par_clusters       = obs_clusters_sum(strcmp(obs_clusters_sum.pred, parnames{par}),:);
-            significant_clusters    = find(this_par_clusters.prob < fieldtrip_cfg.alpha);
-            out_par_means           = NaN(height(this_parameter), length(significant_clusters));
-            for tc = 1 : length(significant_clusters)
-                this_cluster            = significant_clusters(tc);
-                clFirst                 = this_par_clusters.first(this_cluster);
-                clLength                = this_par_clusters.length(this_cluster);
-                end_cluster = clFirst  + clLength - 1;
-                if end_cluster > width(this_parameter)
-                    end_cluster = width(this_parameter);
-                end
-                out_par_means(:,tc)     = mean(this_parameter(:, clFirst : end_cluster), 2);
-
-                % Make parameters name suitable to be put as column names in
-                % the output and add the cluster number
-                var_name        = erase(parnames{par}, ['(', ')']);
-                var_name        = replace(var_name, ':', 'X');
-                variable_names  = [variable_names, switchText([var_name, '_clst', num2str(significant_clusters(tc))])];
-            end
-            % Compute cluster means for this parameter
-            out_all_clust = [out_all_clust, out_par_means];
-        end
-
-        % Convert in nicer table for output
-        clust_par_means    = array2table(out_all_clust, 'VariableNames', variable_names);
-        clust_par_means.id = modelout.ids;
-        clust_par_means    = clust_par_means(:, [end, 1:end-1]); % just because i like to have the id column as first
-    end
+% Do this only if it's required by the output to save time
+if nargout > 1
+    clust_par_means = tsglmm_clusters_parmeans(modelout); % the function could have a better name
 end
 
 % Display total elapsed time
