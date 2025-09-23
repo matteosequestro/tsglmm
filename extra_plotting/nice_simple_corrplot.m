@@ -14,7 +14,7 @@ xq = linspace(min(x), max(x), 100)'; % sorted x values for smooth line
 
 
 % figure;
-
+figure
 plot(xq, yhat, 'Color', tcolor, 'LineWidth', 2)
 hold on
 

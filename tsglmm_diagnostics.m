@@ -1,6 +1,6 @@
 
 
-function output = diagnostics_time_series_glmm(modelout)
+function output = tsglmm_diagnostics(modelout)
 
 
 %%% Compute everything you need before plotting

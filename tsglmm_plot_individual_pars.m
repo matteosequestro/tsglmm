@@ -4,9 +4,7 @@ function tsglmm_plot_individual_pars(modelout, parn, use_par_ci)
 parnames_to_plot = modelout.pars.parnames;
 parnames_to_plot = cellfun(@(x) replace(x, '_', ' '), parnames_to_plot, 'UniformOutput', false);
 
-if nargin > 2; 
-    use_par_ci = use_par_ci; 
-else
+if nargin < 3  
     use_par_ci = 0; 
 end
 

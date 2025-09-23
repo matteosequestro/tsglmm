@@ -1,4 +1,4 @@
-function vifTbl = computeVIF_glmm(mdl)
+function vifTbl = tsglmm_compute_vif(mdl)
 
 % Extract fixed-effects design matrix
 X = mdl.designMatrix('Fixed');

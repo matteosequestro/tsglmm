@@ -1,6 +1,6 @@
 function clust_par_means = tsglmm_clusters_parmeans(modelout)
-% Compute mean parameter estimates for each individual and significant cluster
 
+% Compute mean parameter estimates for each individual and significant cluster
 parnames = modelout.pars.parnames;
 npar = length(parnames);
 
@@ -38,7 +38,7 @@ else
             % the output and add the cluster number
             var_name        = erase(parnames{par}, ['(', ')']);
             var_name        = replace(var_name, ':', 'X');
-            variable_names  = [variable_names, switchText([var_name, '_clst', num2str(significant_clusters(tc))])];
+            variable_names  = [variable_names, change_text([var_name, '_clst', num2str(tc)])];
         end
         % Compute cluster means for this parameter
         out_all_clust = [out_all_clust, out_par_means];

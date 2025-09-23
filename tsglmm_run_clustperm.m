@@ -43,12 +43,11 @@ function [modelout, clust_par_means, outputText, outputStats] = tsglmm_run_clust
 
 
 % Set defaults if not set in the cfg
-plot_non_significant_clusters   = getOrDefault(cfg, 'plot_non_significant_clusters', 0);
-glm_likelihood                  = getOrDefault(cfg, 'glm_likelihood', 'Gaussian');
-cut_short_clusters              = getOrDefault(cfg, 'cut_short_clusters', 0);
-minlength                       = getOrDefault(cfg, 'minlength', 0);
-wantplot_perm                   = getOrDefault(cfg, 'wantplot_perm', 1);
-modname                         = getOrDefault(cfg, 'modname', ""); % just for plotting purposes, e.g., if you need model comparison
+glm_likelihood                  = get_or_default(cfg, 'glm_likelihood', 'Gaussian');
+cut_short_clusters              = get_or_default(cfg, 'cut_short_clusters', 0);
+minlength                       = get_or_default(cfg, 'minlength', 0);
+wantplot_perm                   = get_or_default(cfg, 'wantplot_perm', 1);
+modname                         = get_or_default(cfg, 'modname', ""); % just for plotting purposes, e.g., if you need model comparison
 
 % Take time
 tic
@@ -61,16 +60,16 @@ fieldtrip_cfg.spmversion = 'spm12';
 fieldtrip_cfg.feedback   = 'no';
 
 % Get defaults for fieldtrip
-fieldtrip_cfg.numrandomization  = getOrDefault(fieldtrip_cfg, 'numrandomization', 1e3);              % number of permutations
-fieldtrip_cfg.method            = getOrDefault(fieldtrip_cfg, 'method',           'montecarlo');     % use monte carlo sampling for 'p-values'
-fieldtrip_cfg.statistic         = getOrDefault(fieldtrip_cfg, 'statistic',        'depsamplesT');    % paired t-test (equivalent to t-test agains 0 if contrasted with a null matrix of zeros)
-fieldtrip_cfg.correctm          = getOrDefault(fieldtrip_cfg, 'correctm',         'cluster');        % correction method
-fieldtrip_cfg.clusterstatistic  = getOrDefault(fieldtrip_cfg, 'clusterstatistic', 'maxsum');         % statistic to compute on permutations
-fieldtrip_cfg.tail              = getOrDefault(fieldtrip_cfg, 'tail',             0);                % two-sided test to find clusters
-fieldtrip_cfg.clustertail       = getOrDefault(fieldtrip_cfg, 'clustertail',      0);                % compare observed clusters against positive and negative permutation clusters
-fieldtrip_cfg.clusteralpha      = getOrDefault(fieldtrip_cfg, 'clusteralpha',     0.05);             % alpha for cluster detection
-fieldtrip_cfg.alpha             = getOrDefault(fieldtrip_cfg, 'alpha',            0.05);             % alpha for monte carlo testing
-fieldtrip_cfg.neighbours        = getOrDefault(fieldtrip_cfg, 'neighbours',       []);               % no spatial neighbours since it's unidimensional
+fieldtrip_cfg.numrandomization  = get_or_default(fieldtrip_cfg, 'numrandomization', 1e3);              % number of permutations
+fieldtrip_cfg.method            = get_or_default(fieldtrip_cfg, 'method',           'montecarlo');     % use monte carlo sampling for 'p-values'
+fieldtrip_cfg.statistic         = get_or_default(fieldtrip_cfg, 'statistic',        'depsamplesT');    % paired t-test (equivalent to t-test agains 0 if contrasted with a null matrix of zeros)
+fieldtrip_cfg.correctm          = get_or_default(fieldtrip_cfg, 'correctm',         'cluster');        % correction method
+fieldtrip_cfg.clusterstatistic  = get_or_default(fieldtrip_cfg, 'clusterstatistic', 'maxsum');         % statistic to compute on permutations
+fieldtrip_cfg.tail              = get_or_default(fieldtrip_cfg, 'tail',             0);                % two-sided test to find clusters
+fieldtrip_cfg.clustertail       = get_or_default(fieldtrip_cfg, 'clustertail',      0);                % compare observed clusters against positive and negative permutation clusters
+fieldtrip_cfg.clusteralpha      = get_or_default(fieldtrip_cfg, 'clusteralpha',     0.05);             % alpha for cluster detection
+fieldtrip_cfg.alpha             = get_or_default(fieldtrip_cfg, 'alpha',            0.05);             % alpha for monte carlo testing
+fieldtrip_cfg.neighbours        = get_or_default(fieldtrip_cfg, 'neighbours',       []);               % no spatial neighbours since it's unidimensional
 
 % Fit the model and find clusters in the observed data
 disp('_________________________________________________')
@@ -83,7 +82,7 @@ tslen               = width(modelout.pars.estimates); % length of the time-serie
 parnames            = modelout.pars.parnames;
 modelout.formula    = formula;
 modelout.modname    = modname;
-
+modelout.likelihood = glm_likelihood;
 % Unpack individual parameter estimates
 pars_series = modelout.full_ind_estimates;
 
@@ -164,7 +163,7 @@ for pp = 1 : size(pars_series, 3)
 
     clusters            = sortrows(clusters, 'first');                      % Sort clusters by timing
     clusters.clustern   = (1 : height(clusters))';                          % Add cluster number
-    clusters.pred       = repmat(switchText(parnames{pp}), height(clusters), 1);        % Add predictor name
+    clusters.pred       = repmat(change_text(parnames{pp}), height(clusters), 1);        % Add predictor name
 
     % Export to the main dataset (or create it)
     if pp == 1
@@ -195,7 +194,6 @@ end
 
 % Display total elapsed time
 fprintf('done in %.2fs!\n', round(toc,2));
-disp('_________________________________________________')
 
 
 end
