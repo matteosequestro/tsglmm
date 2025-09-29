@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Function to compute parameters with GLME for a time series
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function modelout = time_series_glmm(data, formula, cfg)
+function modelout = tsglmm_fit_model(data, formula, cfg)
 % --------------------------------------------------------------------------
 % Computes linear mixed-effects models (GLME or LME) across a time series,
 % optionally in parallel, and extracts parameter estimates, R-squared,
@@ -41,11 +41,11 @@ function modelout = time_series_glmm(data, formula, cfg)
 
 %% Set defaults 
 % Unpack method variables
-verbose_fit       = getOrDefault(cfg, 'verbose_fit', 0);
-want_diagnostic   = getOrDefault(cfg, 'want_diagnostic', 1);
-want_parallel_fit = getOrDefault(cfg, 'want_parallel_fit', 0);
-glm_likelihood    = getOrDefault(cfg, 'glm_likelihood', 'Gaussian');
-nworkers          = getOrDefault(cfg, 'nworkers', []);  % empty = default pool
+verbose_fit       = get_or_default(cfg, 'verbose_fit', 0);
+want_diagnostic   = get_or_default(cfg, 'want_diagnostic', 1);
+want_parallel_fit = get_or_default(cfg, 'want_parallel_fit', 0);
+glm_likelihood    = get_or_default(cfg, 'glm_likelihood', 'Gaussian');
+nworkers          = get_or_default(cfg, 'nworkers', []);  % empty = default pool
 
 % Parallel pool setup
 if want_parallel_fit
@@ -104,9 +104,15 @@ tmpset.tmpy = cellfun(@(x) x(1), tmpset.y2);
 tmpformula  = ['tmpy ' formula(find(formula=='~'):end)];
 
 % Fit the model and check timing
+opts = statset('fitlme');
+opts.Display = 'off';   % suppress printed messages
+opts.CheckHessian = true;   % suppress printed messages
+
+
 tic
-tmp_rm = fitfun(tmpset, tmpformula);
+tmp_rm = fitlme(tmpset, tmpformula, 'FitMethod', 'REML', 'OptimizerOptions', opts);
 fake_length = toc;
+
 
 % Display runtime for a single model and estimated overall runtime
 expected_length = fake_length * tslen;

@@ -83,6 +83,7 @@ parnames            = modelout.pars.parnames;
 modelout.formula    = formula;
 modelout.modname    = modname;
 modelout.likelihood = glm_likelihood;
+
 % Unpack individual parameter estimates
 pars_series = modelout.full_ind_estimates;
 
