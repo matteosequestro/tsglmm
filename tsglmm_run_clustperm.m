@@ -52,8 +52,13 @@ modname                         = get_or_default(cfg, 'modname', ""); % just for
 % Take time
 tic
 
-% Unpack the fieldtrip cfg with something uninteresting
-fieldtrip_cfg            = cfg.fieldtrip_cfg;
+%%% Set default for fieldtripcg
+if ~isfield(cfg, "fieldtrip_cfg")
+    fieldtrip_cfg = struct();
+end
+
+% Specific fields for the cluster-based permutation, probably you won't
+% need to change them.
 fieldtrip_cfg.uvar       = 1;  % subject
 fieldtrip_cfg.ivar       = 2;  % condition
 fieldtrip_cfg.spmversion = 'spm12';
@@ -129,26 +134,33 @@ for pp = 1 : size(pars_series, 3)
     outputStats{pp} = stat;
 
     % Extract positive cluster info
-    n_pclusters = length(stat.posclusters);
-    for cl = 1 : n_pclusters
-        clus_pos = find(stat.posclusterslabelmat == cl);
-        stat.posclusters(cl).first      = clus_pos(1);
-        stat.posclusters(cl).last       = clus_pos(end);
-        stat.posclusters(cl).length     = length(clus_pos);
+    if isfield(stat, "posclusters")
+        n_pclusters = length(stat.posclusters);
+        for cl = 1 : n_pclusters
+            clus_pos = find(stat.posclusterslabelmat == cl);
+            stat.posclusters(cl).first      = clus_pos(1);
+            stat.posclusters(cl).last       = clus_pos(end);
+            stat.posclusters(cl).length     = length(clus_pos);
+        end
+        posT = struct2table(stat.posclusters);
+    else
+        posT = [];
     end
-    
+
     % Extract negative cluster info
-    n_nclusters = length(stat.negclusters);
-    for cl = 1 : n_nclusters
-        clus_neg                        = find(stat.negclusterslabelmat == cl);
-        stat.negclusters(cl).first      = clus_neg(1);
-        stat.negclusters(cl).last       = clus_neg(end);
-        stat.negclusters(cl).length     = length(clus_neg);
+    if isfield(stat, "negclusters")
+        n_nclusters = length(stat.negclusters);
+        for cl = 1 : n_nclusters
+            clus_neg                        = find(stat.negclusterslabelmat == cl);
+            stat.negclusters(cl).first      = clus_neg(1);
+            stat.negclusters(cl).last       = clus_neg(end);
+            stat.negclusters(cl).length     = length(clus_neg);
+        end
+        negT = struct2table(stat.negclusters);
+    else
+        negT = [];
     end
-    
-    % Convert clusters to tables once
-    posT = struct2table(stat.posclusters);
-    negT = struct2table(stat.negclusters);
+
 
     % Merge positive and negative clusters
     if ~isempty(posT) && ~isempty(negT)
@@ -167,7 +179,7 @@ for pp = 1 : size(pars_series, 3)
     clusters.pred       = repmat(change_text(parnames{pp}), height(clusters), 1);        % Add predictor name
 
     % Export to the main dataset (or create it)
-    if pp == 1
+    if ~exist("obs_clusters_sum", "var")
         obs_clusters_sum = clusters;
     else
         obs_clusters_sum = [obs_clusters_sum; clusters];

@@ -73,17 +73,40 @@ end
 %%% Define likelihood function 
 % You could just always use figlme with 'Distribution', 'Gaussian' when
 % needed, but fitlme is faster and preferrable
-if strcmpi(glm_likelihood, 'Gaussian')
-    fitfun = @(x,y) fitlme(x, y); 
+% Fit the model and check timing
+if strcmp(glm_likelihood, 'Gaussian')
+    opts = statset('fitlme');
+    opts.Display = 'off';   % suppress printed messages
+    opts.CheckHessian = true;   % suppress printed messages
+    fitfun = @(x,y) fitlme(x, y, 'OptimizerOptions', opts);
 else
-    fitfun = @(x,y) fitglme(x, y, 'Distribution', glm_likelihood);
+    opts = statset('fitglme');
+    opts.Display = 'off';   % suppress printed messages
+    opts.CheckHessian = true;   % suppress printed messages
+    fitfun = @(x,y) fitglme(x, y, 'Distribution', glm_likelihood,'OptimizerOptions', opts);
 end
 
 %%% Extract dependent variable 
 yvar = strtrim(formula(1:find(formula=='~')-1));
 
+%%% Find the time series variable (which is not necessarily the dependent
+%%% variable if, e.g., you are predicting choices by signal)
+fixed_eff_formula   = formula(find(formula=='~')+1:find(formula == '(')-1);
+fixed_eff_formula   = erase(fixed_eff_formula, ["+", "*"]);
+predictors          = strsplit(fixed_eff_formula, ' ');
+predictors(cellfun(@(x) isempty(x) || strcmp(x, '1') || contains(x,':'), predictors)) = [];
+
+all_tsvars = predictors(cellfun(@(x) isa(data.(x), 'cell') && size(cell2mat(data.(x)), 2) > 1, predictors));
+if isempty(all_tsvars)
+    error(['Model formula needs to contain at least one time series variable. Current formula is: ', formula])
+elseif isscalar(all_tsvars)
+    tsvar = all_tsvars{1};
+elseif length(all_tsvars) > 1
+    error(['your formula contains ' num2str(length(all_tsvars)), ' time series variable, but currently tsglmm_fit_model supports only one. If you really need more you can ask me to hurry up in implementing this feature at matteo.sequestro@gmail.com'])
+end
+
 %%% Time series length
-tslen = length(data.(yvar){1});
+tslen = length(data.(tsvar){1});
 
 %%% Preallocate arrays
 loglik      = zeros(1, tslen);
@@ -94,23 +117,15 @@ ordinary    = zeros(1, tslen);
 adjusted    = zeros(1, tslen);
 
 %%% Backup of the dependent variable (needed later)
-data.y2 = data.(yvar);
-
+data.ts2 = data.(tsvar);
 
 %% Fit one time point to estimate runtime
 % Extract a single sample for the dependent variable
 tmpset      = data;
-tmpset.tmpy = cellfun(@(x) x(1), tmpset.y2);
-tmpformula  = ['tmpy ' formula(find(formula=='~'):end)];
-
-% Fit the model and check timing
-opts = statset('fitlme');
-opts.Display = 'off';   % suppress printed messages
-opts.CheckHessian = true;   % suppress printed messages
-
+tmpset.(tsvar) = cellfun(@(x) x(1), tmpset.(tsvar));
 
 tic
-tmp_rm = fitlme(tmpset, tmpformula, 'FitMethod', 'REML', 'OptimizerOptions', opts);
+tmp_rm = fitfun(tmpset, formula);
 fake_length = toc;
 
 
@@ -128,7 +143,6 @@ fprintf('One model took %.2f seconds. Rough estimate of total time: %.2f seconds
     fake_length, expected_length, expected_length/60);
 
 %% Compute and export some useful variable
-
 npars           = length(tmp_rm.CoefficientNames);          % number of parameters (or coefficients if you prefer) 
 parnames        = tmp_rm.CoefficientNames;                  % parameters' names
 idvar           = tmp_rm.Formula.GroupingVariableNames{1};  % the name of the column containing participants' ids
@@ -156,8 +170,8 @@ if want_parallel_fit
     parfor tt = 1:tslen
         if verbose_fit; fprintf("parallel modeling point: %d/%d\n", tt, tslen); end
         set = data;
-        set.(yvar) = cellfun(@(x) x(tt), data.y2);
 
+        set.(tsvar) = cellfun(@(x) x(tt), data.ts2);
         rm = fitfun(set, formula);
 
         % Participant averages
@@ -174,7 +188,7 @@ if want_parallel_fit
         [~, ~, blupstats] = randomEffects(rm);
 
         individual_estimates = NaN(nids, 1, npars);
-        for pp = 1:length(parnames)
+        for pp = 1 : length(parnames)
             tp = blupstats(strcmp(blupstats.Name, parnames(pp)), :);
             tp.Estimate = tp.Estimate + festats.Estimate(strcmp(festats.Name, parnames(pp)));
             individual_estimates(:,:,pp) = tp.Estimate;
@@ -198,10 +212,11 @@ else
     for tt = 1:tslen
         if verbose_fit; fprintf("sequentially modeling point: %d/%d\n", tt, tslen); end
         set = data;
-        set.(yvar) = cellfun(@(x) x(tt), data.y2);
 
+        set.(tsvar) = cellfun(@(x) x(tt), data.ts2);
         rm = fitfun(set, formula);
 
+        % Participant averages
         averages(:,tt) = groupsummary(set.(yvar), table2array(set(:,idvar)), 'mean');
 
         if want_diagnostic
@@ -210,11 +225,12 @@ else
             residuals(:, tt) = set.(yvar) - yhat;
         end
 
+        % Extract fixed and random effects
         [~, ~, festats] = fixedEffects(rm);
         [~, ~, blupstats] = randomEffects(rm);
 
         individual_estimates = NaN(nids, 1, npars);
-        for pp = 1:length(parnames)
+        for pp = 1 : length(parnames)
             tp = blupstats(strcmp(blupstats.Name, parnames(pp)), :);
             tp.Estimate = tp.Estimate + festats.Estimate(strcmp(festats.Name, parnames(pp)));
             individual_estimates(:,:,pp) = tp.Estimate;
