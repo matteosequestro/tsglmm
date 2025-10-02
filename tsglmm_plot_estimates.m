@@ -1,4 +1,4 @@
-function tsglmm_plot_estimates(modelout, cfg)
+function f1 = tsglmm_plot_estimates(modelout, cfg)
 
 
 parnames = modelout.pars.parnames;
@@ -17,7 +17,7 @@ nrows_tiles = ceil(sqrt(npar));
 ncols_tiles = ceil(npar / nrows_tiles);
 
 % Prepare the layout (keep it tight)
-figure
+f1 = figure
 tld             = tiledlayout(nrows_tiles, ncols_tiles);
 tld.TileSpacing = 'compact';
 tld.Padding     = 'compact';

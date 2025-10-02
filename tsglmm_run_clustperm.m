@@ -31,7 +31,7 @@ function [modelout, clust_par_means, outputText, outputStats] = tsglmm_run_clust
 %                           interval, tvalues), a "criteria" field with
 %                           log-likelihood of the model, as well as AIC,
 %                           BIC and deviance criteria (for each sample
-%                           point; and an "rsqrd" field with ordinary and
+%                           point; and an "rsqrd" field with ordinary andf$costsd
 %                           adjusted R-squared
 % obs_clusters_sum      : output of the cluster based permutation. For each
 %                           coefficient in the model and each cluster
@@ -41,7 +41,7 @@ function [modelout, clust_par_means, outputText, outputStats] = tsglmm_run_clust
 %                           of the cluster and t-mass.
 % ----------------------------------------------------------------------------------------------------------------------------------------------
 
-
+tapas_softmax_cost_binary
 % Set defaults if not set in the cfg
 glm_likelihood                  = get_or_default(cfg, 'glm_likelihood', 'Gaussian');
 cut_short_clusters              = get_or_default(cfg, 'cut_short_clusters', 0);
@@ -76,12 +76,13 @@ fieldtrip_cfg.clusteralpha      = get_or_default(fieldtrip_cfg, 'clusteralpha', 
 fieldtrip_cfg.alpha             = get_or_default(fieldtrip_cfg, 'alpha',            0.05);             % alpha for monte carlo testing
 fieldtrip_cfg.neighbours        = get_or_default(fieldtrip_cfg, 'neighbours',       []);               % no spatial neighbours since it's unidimensional
 
-% Fit the model and find clusters in the observed data
+% Fit the model
 disp('_________________________________________________')
-disp('fitting the model...')
+disp(['fitting a ', change_text(glm_likelihood), ' model with the formula: ', formula '...'])
 [modelout]          = tsglmm_fit_model(data, formula, cfg);
 fprintf('fitting done in %.2fs!\n', round(toc,2));
 
+% Extract some variables from the model and add them modelout
 npar                = height(modelout.pars.estimates); % number of parameters (a.k.a., coefficients)
 tslen               = width(modelout.pars.estimates); % length of the time-series
 parnames            = modelout.pars.parnames;
@@ -186,13 +187,15 @@ for pp = 1 : size(pars_series, 3)
     end
 end
 
-% Export observed cluster summary
-modelout.obs_clusters_sum = obs_clusters_sum;
+
 
 % Cut short clusters
 if cut_short_clusters
     obs_clusters_sum(obs_clusters_sum.length < minlength,:) = [];
 end
+
+% Export observed cluster summary
+modelout.obs_clusters_sum = obs_clusters_sum;
 
 %% Plots
 if wantplot_perm
