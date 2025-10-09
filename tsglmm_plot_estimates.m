@@ -17,7 +17,7 @@ nrows_tiles = ceil(sqrt(npar));
 ncols_tiles = ceil(npar / nrows_tiles);
 
 % Prepare the layout (keep it tight)
-f1 = figure
+f1              = figure;
 tld             = tiledlayout(nrows_tiles, ncols_tiles);
 tld.TileSpacing = 'compact';
 tld.Padding     = 'compact';

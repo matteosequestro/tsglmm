@@ -41,7 +41,7 @@ function [modelout, clust_par_means, outputText, outputStats] = tsglmm_run_clust
 %                           of the cluster and t-mass.
 % ----------------------------------------------------------------------------------------------------------------------------------------------
 
-tapas_softmax_cost_binary
+
 % Set defaults if not set in the cfg
 glm_likelihood                  = get_or_default(cfg, 'glm_likelihood', 'Gaussian');
 cut_short_clusters              = get_or_default(cfg, 'cut_short_clusters', 0);
