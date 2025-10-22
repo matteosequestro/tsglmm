@@ -55,6 +55,8 @@ tic
 %%% Set default for fieldtripcg
 if ~isfield(cfg, "fieldtrip_cfg")
     fieldtrip_cfg = struct();
+else
+    fieldtrip_cfg = cfg.fieldtrip_cfg;
 end
 
 % Specific fields for the cluster-based permutation, probably you won't
@@ -73,7 +75,7 @@ fieldtrip_cfg.clusterstatistic  = get_or_default(fieldtrip_cfg, 'clusterstatisti
 fieldtrip_cfg.tail              = get_or_default(fieldtrip_cfg, 'tail',             0);                % two-sided test to find clusters
 fieldtrip_cfg.clustertail       = get_or_default(fieldtrip_cfg, 'clustertail',      0);                % compare observed clusters against positive and negative permutation clusters
 fieldtrip_cfg.clusteralpha      = get_or_default(fieldtrip_cfg, 'clusteralpha',     0.05);             % alpha for cluster detection
-fieldtrip_cfg.alpha             = get_or_default(fieldtrip_cfg, 'alpha',            0.05);             % alpha for monte carlo testing
+fieldtrip_cfg.alpha             = get_or_default(fieldtrip_cfg, 'alpha',            0.025);             % alpha for monte carlo testing
 fieldtrip_cfg.neighbours        = get_or_default(fieldtrip_cfg, 'neighbours',       []);               % no spatial neighbours since it's unidimensional
 
 % Fit the model
