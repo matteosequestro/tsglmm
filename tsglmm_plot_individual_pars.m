@@ -1,4 +1,4 @@
-function tsglmm_plot_individual_pars(modelout, parn, use_par_ci)
+function f1 = tsglmm_plot_individual_pars(modelout, parn, use_par_ci)
 
 
 parnames_to_plot = modelout.pars.parnames;
@@ -26,7 +26,7 @@ if nargin > 1
 
     time = 1 : width(indest);
 
-    figure
+    f1 = figure;
     plot(indest', 'Color', [0 0 0 .2])
     hold on
     patch([time, fliplr(time)], [lowerbound, fliplr(upperbound)], ...
@@ -41,7 +41,7 @@ else
     ncols_tiles = ceil(n_pars / nrows_tiles);
 
     % Prepare the layout (keep it tight)
-    figure
+    f1 = figure;
     tld             = tiledlayout(nrows_tiles, ncols_tiles);
     tld.TileSpacing = 'compact';
     tld.Padding     = 'compact';
