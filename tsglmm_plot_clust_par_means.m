@@ -33,14 +33,15 @@ tiledlayout(1,3)                             % 3 panels side by side
 % -------------------------------------------------------------------------
 nexttile
 hold on
+
+b = bar(means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', 'k', ...
+    'FaceAlpha', 0.3); 
+errorbar(1:numel(means), means, ses, 'k', 'LineStyle', 'none', 'LineWidth', 1.2, 'CapSize', 0);
 for i = 1:width(data)
-    x = i + 0.1*(rand(size(data,1),1)-0.5);  % add small horizontal jitter
+    x = i + 0.1 + 0.1*(rand(size(data,1),1)-0.5);  % add small horizontal jitter
     scatter(x, data(:,i), 15, [0.5 0.5 0.5], 'filled', ...
         'MarkerFaceAlpha', 0.3);             % individual dots
 end
-errorbar(1:width(data), means, ses, 'o', ...
-    'MarkerSize', 3, 'MarkerFaceColor', [1 0 0], 'Color', [1 0 0], ...
-    'LineWidth', 1.2, 'CapSize', 0);
 
 xlim([0.5 width(data)+.5])
 set(gca, 'XTick', 1:width(data), 'XTickLabels', parnames)

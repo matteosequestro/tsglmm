@@ -1,4 +1,4 @@
-function f1 = tsglmm_plot_estimates(modelout, cfg)
+function f1 = tsglmm_plot_estimates(modelout, cfg, layout_dims)
 
 
 parnames = modelout.pars.parnames;
@@ -13,9 +13,13 @@ parnames_to_plot = cellfun(@(x) replace(x, '_', ' '), parnames, 'UniformOutput',
 time = 1 : tslen;
 
 % Number of columns and rows for the layout
-nrows_tiles = ceil(sqrt(npar));
-ncols_tiles = ceil(npar / nrows_tiles);
-
+if nargin < 3
+    nrows_tiles = ceil(sqrt(npar));
+    ncols_tiles = ceil(npar / nrows_tiles);
+else
+    nrows_tiles = layout_dims(1);
+    ncols_tiles = layout_dims(2);
+end
 % Prepare the layout (keep it tight)
 f1              = figure;
 tld             = tiledlayout(nrows_tiles, ncols_tiles);
